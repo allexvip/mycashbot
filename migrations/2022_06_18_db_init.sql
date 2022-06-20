@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS log(
+       chatid BIGINT,
+       message TEXT,
+       	'created' DATETIME NULL DEFAULT NULL
+       );
+CREATE TABLE IF NOT EXISTS 'user' (
+	'chatid' BIGINT NULL PRIMARY KEY,
+	'username' VARCHAR(50) NULL DEFAULT NULL,
+	'first_name' VARCHAR(50) NULL DEFAULT NULL,
+	'last_name' VARCHAR(50) NULL DEFAULT NULL,
+	'created' DATETIME NULL DEFAULT NULL,
+	'upd' DATETIME NULL DEFAULT NULL
+)
+;

@@ -23,24 +23,28 @@ conn = sqlite3.connect('mycash.db')
 cur = conn.cursor()
 
 if sql_init:
-    cur.execute("""CREATE TABLE IF NOT EXISTS log(
-       chatid BIGINT,
-       message TEXT,
-       	'created' DATETIME NULL DEFAULT NULL
-       );
-    """)
-    conn.commit()
-    cur.execute("""CREATE TABLE IF NOT EXISTS 'user' (
-	'chatid' BIGINT NULL PRIMARY KEY,
-	'username' VARCHAR(50) NULL DEFAULT NULL,
-	'first_name' VARCHAR(50) NULL DEFAULT NULL,
-	'last_name' VARCHAR(50) NULL DEFAULT NULL,
-	'created' DATETIME NULL DEFAULT NULL,
-	'upd' DATETIME NULL DEFAULT NULL
-)
-;
-        """)
-    conn.commit()
+    with open("migrations/2022_06_18_db_init.sql", "r") as file:
+        mass = file.read()
+        for sql_item in mass.split(';'):
+            if len(sql_item) > 5:
+                cur.execute(sql_item)
+                conn.commit()
+
+
+def get_keyboard():
+    webAppTest = types.WebAppInfo("https://telegram.mihailgok.ru")  # создаем webappinfo - формат хранения url
+    return types.InlineKeyboardMarkup().row(
+        types.InlineKeyboardButton(text="Тестовая страница", web_app=webAppTest, url="https://telegram.mihailgok.ru")
+    )
+
+
+def webAppKeyboard():  # создание клавиатуры с webapp кнопкой
+    keyboard = types.ReplyKeyboardMarkup(row_width=1)  # создаем клавиатуру
+    webAppTest = types.WebAppInfo("https://telegram.mihailgok.ru")  # создаем webappinfo - формат хранения url
+    one_butt = types.KeyboardButton(text="Тестовая страница", web_app=webAppTest)  # создаем кнопку типа webapp
+    keyboard.add(one_butt)  # добавляем кнопки в клавиатуру
+
+    return keyboard  # возвращаем клавиатуру
 
 
 async def send_to_db(sql):
@@ -74,7 +78,8 @@ async def send_welcome(message: types.Message):
 Я помогу учесть Ваши доходы и расходы. 
     
 Помощь по команде /help
-""")
+""", reply_markup=get_keyboard())
+
 
 @dp.message_handler(commands=['help'])
 async def send_welcome(message: types.Message):
@@ -85,6 +90,7 @@ async def send_welcome(message: types.Message):
     
 жми 👉 /start""")
 
+
 @dp.message_handler()
 async def echo(message: types.Message):
     # old style:
@@ -94,6 +100,7 @@ async def echo(message: types.Message):
     await send_to_db(f"""INSERT INTO log (`chatid`, `message`,`created`) 
                VALUES('{message.from_user.id}', '{message.text}',datetime('now'));""")
     await message.answer(f'Сам {message.text}')
+
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
