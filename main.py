@@ -2,6 +2,8 @@ import logging
 import sqlite3
 from aiogram import Bot, Dispatcher, executor, types
 from dotenv import dotenv_values
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types.web_app_info import WebAppInfo
 import os
 
 config = dotenv_values("config.env")
@@ -78,7 +80,9 @@ async def send_welcome(message: types.Message):
 Я помогу учесть Ваши доходы и расходы. 
     
 Помощь по команде /help
-""", reply_markup=get_keyboard())
+""", reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton(text="test",
+web_app=WebAppInfo(url="https://script.google.com/macros/s/AKfycby3lyo0yU4z2wPI6li2JK1N2w4J9UT52xQ3HwZcL9j_DdzlAx0/exec")))
+                         )
 
 
 @dp.message_handler(commands=['help'])
@@ -99,8 +103,16 @@ async def echo(message: types.Message):
     chatid = message.from_user.id
     await send_to_db(f"""INSERT INTO log (`chatid`, `message`,`created`) 
                VALUES('{message.from_user.id}', '{message.text}',datetime('now'));""")
-    await message.answer(f'Сам {message.text}')
+    await message.answer(f'Сам {message.text}',reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton(text=f"Сайт {message.text}",
+web_app=WebAppInfo(url=f"https://{message.text}"))))
 
+
+@dp.message_handler(content_types="answerWebAppQuery") #получаем отправленные данные
+def answer(WebAppInfo):
+   print(WebAppInfo) #вся информация о сообщении
+   print(WebAppInfo.web_app_data.data) #конкретно то что мы передали в бота
+   bot.send_message(WebAppInfo.chat.id, f"получили инофрмацию из веб-приложения: {WebAppInfo.web_app_data.data}")
+   #отправляем сообщение в ответ на отправку данных из веб-приложения
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
